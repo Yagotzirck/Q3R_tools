@@ -27,8 +27,8 @@ typedef struct _TgaHeader
 /* global variables (file scope only) */
 static TGAHEAD tga_header;
 
-struct tgaPixel24_s tga_palette24[256], tga_shrunk_palette24[256];
-struct tgaPixel32_s tga_palette32[256], tga_shrunk_palette32[256];
+static struct tgaPixel24_s tga_palette24[256], tga_shrunk_palette24[256];
+static struct tgaPixel32_s tga_palette32[256], tga_shrunk_palette32[256];
 
 
 /* local functions declarations */
