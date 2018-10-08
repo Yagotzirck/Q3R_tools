@@ -25,4 +25,4 @@ On Windows the drag-and-drop method works as well, but in Q3R_ssh2tga's case you
 ## Credits
 - torridgristle: for discovering that the compressed entries inside the LINKFILE.LNK archive file use REFPACK compression format, and explaining me how to fix the swizzled palettes for 8bpp .ssh files;
 
-- Mr. Mouse: for sharing his discoveries about .ssh file format (albeit for a different game and with slight variations), which made me life easier when reversing the format used in Q3R.
+- Mr. Mouse: for sharing his discoveries about .ssh file format (albeit for a different game and with slight variations), which made my life easier when reversing the format used in Q3R.
