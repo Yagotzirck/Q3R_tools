@@ -122,8 +122,8 @@ static VAGhdr_t VAGhdr = {
     ""              // will be set for each entry later on
 };
 
-char path[FILENAME_MAX];
-char *currDirPtr;
+static char path[FILENAME_MAX];
+static char *currDirPtr;
 
 // local functions declarations
 static bool is_SDT(FILE *in_fp, SDTtype_t *SDTtype);
