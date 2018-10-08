@@ -137,6 +137,7 @@ bool init_sshHandle(sshHandle_t *sshHandle, const char *sshPath){
         case SSH_TRUECOLOR_24BPP:
         case SSH_TRUECOLOR_32BPP:
             paletteNumEntriesRead = 0;
+            sshHandle->paletteHdr.palNumEntries = 0;
             break;
 
         default:
