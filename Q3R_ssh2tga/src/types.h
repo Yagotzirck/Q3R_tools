@@ -106,7 +106,39 @@ typedef struct sshResHdr_s{
     WORD width;
     WORD height;
     DWORD unk1;     // seems to be always zero
-    DWORD unk2;     // as above, sometimes it has other non-zero values though
+    WORD  unk2;     // as above
+    BYTE  unk3;     // as above
+
+    /* I'm putting this field here for documentation purposes only; I'm not interested in extracting
+    ** mipmap subimages, since it doesn't make any sense in my opinion (they're just lower resolution
+    ** versions of the main image.)
+    ** For those interested in extracting them for whatever reason, it works like this:
+    **
+    ** The mipmap images' data is located immediately after the main image data; each mipmap's data
+    ** is placed one after the other, with width and height being half the size of the
+    ** previous image.
+    **
+    ** As an example, let's assume that the main image is 64x256 and the numMipMaps field is 4; then
+    ** - The 1st mipmap is 32x128;
+    ** - The 2st mipmap is 16x64;
+    ** - The 3rd mipmap is 8x32;
+    ** - the 4th mipmap is 4x16.
+    **
+    ** After the end of the last mipmap's data there's usually the palette header, since I haven't seen any
+    ** truecolor .ssh files including mipmaps.
+    **
+    ** Of course, if the numMipMaps field is 0, then no mipmap images are present.
+    */
+    union{
+        struct{
+            BYTE lastHdrByte_unk:   4;  // low nibble, seems to be always zero
+            BYTE numMipMaps:        4;  // number of mipmaps after the main image, high nibble
+        };
+        /* we'll use this field to extract the data represented in the bitfield struct above
+        ** (actually I'm completely ignoring this, as already stated.)
+        */
+        BYTE numMipMaps_plus_unk;
+    };
 }sshResHdr_t;
 
 

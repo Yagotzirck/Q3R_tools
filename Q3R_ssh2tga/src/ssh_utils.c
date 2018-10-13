@@ -25,6 +25,7 @@ bool init_sshHandle(sshHandle_t *sshHandle, const char *sshPath){
 
     DWORD           imgDataSize;
     sshImgType_t    imgType;
+    DWORD           nextHdrOffset;
 
     DWORD           paletteDataSize;
     DWORD           paletteNumEntriesRead;
@@ -37,7 +38,10 @@ bool init_sshHandle(sshHandle_t *sshHandle, const char *sshPath){
         return false;
     }
 
-    // initialize fields
+    /*************** initialize fields ***************/
+
+
+
 
     // read main header
     fread(&(sshHandle->mainHdr), sizeof(sshHandle->mainHdr), 1, in_fp);
@@ -61,39 +65,34 @@ bool init_sshHandle(sshHandle_t *sshHandle, const char *sshPath){
     fread(&(sshHandle->resHdr), sizeof(sshHandle->resHdr), 1, in_fp);
 
     imgType     = sshHandle->resHdr.nextHdrOffset_plus_imgType & 0xFF;
-    imgDataSize = (sshHandle->resHdr.nextHdrOffset_plus_imgType >> 8);
+    nextHdrOffset = (sshHandle->resHdr.nextHdrOffset_plus_imgType >> 8);
 
-    /* some image headers report zero in the nextHdrOffset field; this kind of images seem to be truecolor 32bpp
-    ** and without the footer header at the end of the file (image data goes all the way to the end of the file).
-    ** However, it's better to handle all possible cases, to be completely sure.
+    /* calculate image data size;
+    ** also, make sure imgType holds a supported value.
     */
-    if(imgDataSize == 0){
-        imgDataSize = sshHandle->resHdr.width * sshHandle->resHdr.height;
+    imgDataSize = sshHandle->resHdr.width * sshHandle->resHdr.height;
 
-        switch(imgType){
-        case SSH_PALETTED_4BPP:
-            imgDataSize = (imgDataSize + 1) / 2;
-            break;
+    switch(imgType){
+    case SSH_PALETTED_4BPP:
+        imgDataSize = (imgDataSize + 1) / 2;
+        break;
 
-        case SSH_PALETTED_8BPP:
-            break;
+    case SSH_PALETTED_8BPP:
+        break;
 
-        case SSH_TRUECOLOR_24BPP:
-            imgDataSize *= sizeof(sshPixel24_t);
-            break;
+    case SSH_TRUECOLOR_24BPP:
+        imgDataSize *= sizeof(sshPixel24_t);
+        break;
 
-        case SSH_TRUECOLOR_32BPP:
-            imgDataSize *= sizeof(sshPixel32_t);
-            break;
+    case SSH_TRUECOLOR_32BPP:
+        imgDataSize *= sizeof(sshPixel32_t);
+        break;
 
-        default:
-            fprintf(stderr,"%s's image type is unknown (%u)\n", sshPath, imgType);
-            fclose(in_fp);
-            return false;
-        }
+    default:
+        fprintf(stderr,"%s's image type is unknown (%u)\n", sshPath, imgType);
+        fclose(in_fp);
+        return false;
     }
-    else    // if it's nonzero, it includes the size of the header which needs to be removed
-        imgDataSize -= sizeof(sshHandle->resHdr);
 
 
     // read the image data
@@ -105,9 +104,19 @@ bool init_sshHandle(sshHandle_t *sshHandle, const char *sshPath){
     fread(sshHandle->imgData, 1, imgDataSize, in_fp);
 
 
-    /* read palette header and palette(if the image is paletted, that is);
-    ** also, make sure imgType holds a supported value
+    /* some image headers report zero in the nextHdrOffset field; this means that no header is present at the end
+    ** of the image data (the .ssh file ends with the image data), which in turn implies that the image is truecolor
+    ** (since there's no palette header following the image's data) and there's nothing else to read.
+    **
+    ** On the other hand, if it's nonzero we can use it to calculate mipmaps' data size and/or filler bytes
+    ** after the main image that need to be skipped.
     */
+    if(nextHdrOffset != 0){
+        nextHdrOffset -= sizeof(sshHandle->resHdr); // remove the header size from the relative offset
+        fseek(in_fp, nextHdrOffset - imgDataSize, SEEK_CUR);    // skip mipmap data and/or filler bytes (if any)
+    }
+
+    // read palette header and palette(if the image is paletted, that is)
     switch(imgType){
         case SSH_PALETTED_4BPP:
         case SSH_PALETTED_8BPP:
@@ -128,7 +137,6 @@ bool init_sshHandle(sshHandle_t *sshHandle, const char *sshPath){
             else    // if it's nonzero, it includes the size of the header which needs to be removed
                 paletteDataSize -= sizeof(sshHandle->paletteHdr);
 
-
             paletteNumEntriesRead = paletteDataSize / sizeof(sshHandle->palette[0]);
             fread(sshHandle->palette, sizeof(sshHandle->palette[0]), paletteNumEntriesRead, in_fp);
 
@@ -137,23 +145,16 @@ bool init_sshHandle(sshHandle_t *sshHandle, const char *sshPath){
         case SSH_TRUECOLOR_24BPP:
         case SSH_TRUECOLOR_32BPP:
             paletteNumEntriesRead = 0;
-            sshHandle->paletteHdr.palNumEntries = 0;
+            memset(&(sshHandle->paletteHdr), 0, sizeof(sshHandle->paletteHdr));
             break;
-
-        default:
-            fprintf(stderr,"%s's image type is unknown (%u)\n", sshPath, imgType);
-            fclose(in_fp);
-            free(sshHandle->imgData);
-            return false;
     }
 
     /* read the footer header at the end of the file;
-    ** initialize header's fields first, in case we don't read anything
+    ** reset footer header's fields first, in case we don't read anything
     ** due to the header's absence
     */
     sshHandle->footerHdr.unk = 0;
     sshHandle->footerHdr.fileName[0] = '\0';
-
 
     // we don't want any buffer overflow
     footerBytesToRead = sshHandle->mainHdr.sshSize - ftell(in_fp);
