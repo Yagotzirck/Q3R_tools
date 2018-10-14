@@ -40,9 +40,6 @@ bool init_sshHandle(sshHandle_t *sshHandle, const char *sshPath){
 
     /*************** initialize fields ***************/
 
-
-
-
     // read main header
     fread(&(sshHandle->mainHdr), sizeof(sshHandle->mainHdr), 1, in_fp);
     if(sshHandle->mainHdr.magic != SSH_MAGICID){
@@ -319,7 +316,6 @@ static bool openTgaFile(sshHandle_t *sshHandle){
 
     return true;
 }
-
 
 
 static void convertAndSave_shrink(sshHandle_t *sshHandle){
@@ -764,8 +760,6 @@ static void convertAndSave_truecolor_upsideDown(sshHandle_t *sshHandle){
     tga_writeHdr(tga_fp);
     fwrite(bufToWrite, 1, bufToWrite_size, tga_fp);
 }
-
-
 
 
 static bool isFullOpaque(sshHandle_t *sshHandle){
