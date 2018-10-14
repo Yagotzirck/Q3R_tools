@@ -83,14 +83,14 @@ static void printUsage(void){
 static outFormat_t checkOption(const char *option, int *firstFileIdx){
     char option_lowercase[FILENAME_MAX];
 
-    const char *optionsStr[] = {
+    const char *optionsStrList[] = {
         "-out_shrink",
         "-out_asis",
         "-out_truecolor_upsidedown"
     };
 
     int i;
-    const int numOptions = sizeof(optionsStr) / sizeof(optionsStr[0]);
+    const int numOptions = sizeof(optionsStrList) / sizeof(optionsStrList[0]);
 
 
     /* if the 1st character isn't a hyphen then we assume that no argument
@@ -103,6 +103,11 @@ static outFormat_t checkOption(const char *option, int *firstFileIdx){
         return OUT_SHRINK;
     }
 
+    /* if the 1st character is a hyphen, then argv[1] is expected to be the option
+    ** and the 1st file passed as a parameter is expected to be at argv[2]
+    */
+    *firstFileIdx = 2;
+
     // get rid of case sensitivity
     for(i = 0; option[i] != '\0'; i++)
         option_lowercase[i] = tolower(option[i]);
@@ -110,16 +115,12 @@ static outFormat_t checkOption(const char *option, int *firstFileIdx){
 
     // find which option has been chosen
     for(i = 0; i < numOptions; i++)
-        if(strcmp(optionsStr[i], option_lowercase) == 0)
-            break;
+        if(strcmp(optionsStrList[i], option_lowercase) == 0)
+            return i;
 
-    if(i == numOptions){
-        fputs(  "The option you specified is unsupported.\n"
-                "Invoke this exe without any parameters to see a list of available options.\n", stderr);
+    // no supported option has been found; abort the program
+    fputs(  "The option you specified is unsupported.\n"
+            "Invoke this exe without any parameters to see a list of available options.\n", stderr);
 
-        exit(EXIT_FAILURE);
-    }
-
-    *firstFileIdx = 2;
-    return i;
+    exit(EXIT_FAILURE);
 }
