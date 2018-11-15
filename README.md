@@ -23,6 +23,9 @@ Invoke each tool from a command line prompt without any arguments to see basic u
 On Windows the drag-and-drop method works as well, but in Q3R_ssh2tga's case you won't be able to control the output format for the tga files.
 
 ## Credits
-- torridgristle: for discovering that the compressed entries inside the LINKFILE.LNK archive file use REFPACK compression format, and explaining me how to fix the swizzled palettes for 8bpp .ssh files;
+- torridgristle: for explaining how to fix the swizzled palettes for 8bpp .ssh files through this .gif:</br>
+![8bpp palette swizzle .gif illustration by torridgristle](Q3R_ssh2tga/8bpp_paletteSwizzle.gif)
+
+- paulguy: for discovering that the compressed entries inside the LINKFILE.LNK archive file use REFPACK compression format;
 
 - Mr. Mouse: for sharing his discoveries about .ssh file format (albeit for a different game and with slight variations), which made my life easier when reversing the format used in Q3R.
